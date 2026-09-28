@@ -960,16 +960,17 @@ ${transcript}
 
 Write clear, warm, professional prose. Use exactly these section headings on their own lines, each followed by 2 to 4 sentences: PURPOSE, PLANNING, POLICIES, PRACTICE, STRENGTHS, NEXT STEPS. For each of the four Ps, note what emerged in the conversation and one gap or question to carry forward. Under NEXT STEPS give three concrete, specific actions. Do not use markdown, asterisks, bullets, or em dashes. Do not invent facts not implied by the transcript.`;
     try{
-      const out=await callClaude("You are an expert educational CPD facilitator.", [{role:"user",content:prompt}], 1200);
+      const out=await callClaude("You are an expert educational CPD facilitator.", [{role:"user",content:prompt}], 2500);
       const clean=stripMarkdown(out);
       const heads=["PURPOSE","PLANNING","POLICIES","PRACTICE","STRENGTHS","NEXT STEPS"];
-      const secs=[];
-      for(let i=0;i<heads.length;i++){
-        const re=new RegExp(heads[i]+"[:\\s]*([\\s\\S]*?)(?="+(heads[i+1]||"$")+"|$)","i");
-        const m=clean.match(re);
-        secs.push({h:heads[i].charAt(0)+heads[i].slice(1).toLowerCase(), b:(m?m[1]:"").trim()});
-      }
-      setDoc(secs.filter(s=>s.b));
+      const by={}; let cur=null;
+      clean.split("\n").forEach(line=>{
+        const m=line.trim().match(/^(PURPOSE|PLANNING|POLICIES|PRACTICE|STRENGTHS|NEXT STEPS)\s*(?:[:\-]\s*(.*))?$/i);
+        if(m){ cur=m[1].toUpperCase(); by[cur]=m[2]?[m[2]]:[]; }
+        else if(cur){ by[cur].push(line); }
+      });
+      const secs=heads.map(h=>({h:h.charAt(0)+h.slice(1).toLowerCase(), b:(by[h]||[]).join("\n").trim()})).filter(x=>x.b);
+      setDoc(secs.length>=3 ? secs : [{h:"Reflection", b:clean}]);
     }catch(e){ setDoc([{h:"Reflection",b:"Your audit conversation is complete. A written record could not be generated automatically this time. You can still use the conversation above as your reflection."}]); }
     setStep("document");
   }
@@ -1181,7 +1182,7 @@ Keep total to 120 words maximum. Warm but direct tone. No jargon without explana
       const res = await fetch("/api/messages", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ model:CLAUDE_MODEL, max_tokens:400, messages:[{role:"user",content:prompt}] })
+        body:JSON.stringify({ model:CLAUDE_MODEL, max_tokens:800, messages:[{role:"user",content:prompt}] })
       });
       const data = await res.json();
       setDebrief(data.content?.find(b=>b.type==="text")?.text || "");
@@ -1334,6 +1335,14 @@ Keep total to 120 words maximum. Warm but direct tone. No jargon without explana
 // ── MAIN APP ─────────────────────────────────────────────────────────
 export default function App() {
   const [phase,setPhase]=useState("landing");
+  // Session-only by design: nothing is stored, so a refresh clears the report.
+  // Warn before the browser discards it.
+  useEffect(()=>{
+    if(phase==="landing") return;
+    const warn=(e)=>{ e.preventDefault(); e.returnValue=""; };
+    window.addEventListener("beforeunload",warn);
+    return ()=>window.removeEventListener("beforeunload",warn);
+  },[phase]);
   const [returnTo,setReturnTo]=useState("landing");
   const [role,setRole]=useState(null);
   const [demographics,setDemographics]=useState({orgType:"",designation:"",size:"",locationPath:[]});
@@ -1377,7 +1386,7 @@ READINESS SUMMARY
 2–3 sentences. Warm, honest, reference their tier.
 
 DIMENSION BREAKDOWN
-One paragraph per dimension. What the score reveals, what is working, the key gap.
+Four short paragraphs, one each for Awareness, Policy, Practice, and Culture, in that order, each beginning with the dimension name. Each is 2 to 3 sentences: what the score reveals, what is working, the key gap. Never answer a dimension with a single word.
 
 TOP 3 PRIORITIES
 Numbered. Specific, actionable, 90-day horizon.
@@ -1388,9 +1397,9 @@ One paragraph. Inspiring 12-month vision.
 NEXT STEP
 1-2 sentences. Close with encouragement. You may add a low-key mention that DMNU Learning Design offers workshops and support if useful. Do not promise any specific plan or deliverable, and do not pressure them to book anything.
 
-400–450 words total.`;
+450–550 words total.`;
     try {
-      const res=await fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const res=await fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:1600,messages:[{role:"user",content:prompt}]})});
       const data=await res.json();
       const text=data.content?.find(b=>b.type==="text")?.text||"";
       setReport(parseReport(text));
@@ -1416,7 +1425,7 @@ NEXT STEP
     <div style={{fontFamily:"'Inter',sans-serif",minHeight:"100vh",background:BG}}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');*{box-sizing:border-box;margin:0;padding:0}@keyframes spin{to{transform:rotate(360deg)}}.dmnu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}@media(max-width:720px){.dmnu-grid{grid-template-columns:repeat(2,1fr)}}.dmnu-pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}@media(max-width:600px){.dmnu-pillars{grid-template-columns:1fr}}*:focus-visible{outline:3px solid #D97706;outline-offset:2px;border-radius:3px}@media(prefers-reduced-motion:reduce){*{animation-duration:0.001ms!important;transition-duration:0.001ms!important}}`}</style>
       <div style={{background:NAVY,padding:"48px 24px 56px",textAlign:"center"}}>
-        <div style={{fontSize:11,fontWeight:700,letterSpacing:3,color:TEAL,marginBottom:16,textTransform:"uppercase"}}>DMNU Learning Design</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16}}><img src="/dmnu-icon.png" alt="DMNU" style={{height:44,width:"auto"}}/><span style={{fontSize:11,fontWeight:700,letterSpacing:3,color:TEAL,textTransform:"uppercase"}}>DMNU Learning Design</span></div>
         <h1 style={{color:"#fff",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,lineHeight:1.2,maxWidth:680,margin:"0 auto 16px"}}>Is Your School or Organisation<br/><span style={{color:TEAL}}>AI-Ready?</span></h1>
         <p style={{color:"#94A3B8",fontSize:17,maxWidth:480,margin:"0 auto 16px",lineHeight:1.6}}>Find out in 5 minutes. {QUESTIONS.length} questions. A personalised readiness report, then test your judgement with a live simulation.</p>
         <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(42,191,191,0.12)",border:"1px solid rgba(42,191,191,0.35)",borderRadius:20,padding:"6px 16px",marginBottom:36}}>
