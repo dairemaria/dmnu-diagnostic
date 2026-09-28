@@ -860,9 +860,9 @@ function SavPage({ onBack }){
 // ── 4Ps ACTIVE AUDIT ─────────────────────────────────────────────────
 const AUDIT_CHALLENGERS = {
   colleague: {
-    name:"A trusted colleague", emoji:"👤", versions:["classroom","systems"], focusP:"Purpose and Practice",
+    name:"A trusted colleague", emoji:"👤", versions:["classroom","systems","training"], focusP:"Purpose and Practice",
     blurb:"A peer who shares your context and will not accept hand-waving. Presses on why you use AI and whether it truly serves learning.",
-    persona:"You are a fellow educator and trusted colleague of the person, at the same level as them. You are collegial and informal, but intellectually sharp and hard to fob off because you share their context. You are not hostile. You challenge them peer to peer about how they use AI, pressing especially on PURPOSE (why use AI here at all, does it serve learning or just save time) and PRACTICE (does meaningful human oversight remain, are learners still doing the thinking). Call out vague or defensive answers.",
+    persona:"You are a fellow practitioner and trusted colleague of the person, at the same level as them (an educator, trainer, or professional in their field). You are collegial and informal, but intellectually sharp and hard to fob off because you share their context. You are not hostile. You challenge them peer to peer about how they use AI, pressing especially on PURPOSE (why use AI here at all, does it serve learning or just save time) and PRACTICE (does meaningful human oversight remain, are learners still doing the thinking). Call out vague or defensive answers.",
   },
   parent: {
     name:"A concerned parent", emoji:"🧑‍🍼", versions:["classroom","systems"], focusP:"Purpose and transparency",
@@ -879,31 +879,58 @@ const AUDIT_CHALLENGERS = {
     blurb:"A formal inspector assessing institutional AI governance, prompted by a parent complaint. Unmoved by feelings. Wants evidence.",
     persona:"You are a formal external inspector assessing the institution's AI governance, prompted in part by a parent complaint. You are professional, formal, and unmoved by feelings or good intentions. You press on POLICIES (show me the written policy, is it current) and PLANNING (show me it was followed, who is the named person accountable, where is the documentation and the impact assessment). You care only about what can be evidenced. Be correct and courteous, never cruel, but do not accept an answer that cannot be evidenced.",
   },
+  learner: {
+    name:"A learner or participant", emoji:"🎓", versions:["training"], focusP:"Purpose and transparency",
+    blurb:"Someone on the receiving end of your training, coaching or service. Direct and personal, and entitled to a straight answer about how AI is used with them.",
+    persona:"You are a learner: a participant, trainee, student, or service user on the receiving end of the person's training, coaching, or programme. You are not a professional in their field. You are personal and direct, at times sceptical, but reasonable and open to a good answer. You challenge the person about AI use that affects you, pressing on PURPOSE (what exactly is being used on me and why) and transparency (was I told, is it fair to me, what happens to what I typed or said, who else sees it). Make the abstract personal and concrete. Do not use jargon.",
+  },
+  client: {
+    name:"A client or funder, mid-audit", emoji:"🤝", versions:["training"], focusP:"Policies and Practice",
+    blurb:"The organisation that commissions or funds your work, under pressure after a learner complaint. Needs you to show your practice was defensible.",
+    persona:"You are the person's client or funder: the organisation, manager, or funder that commissions or pays for their training or programme. A learner has complained about AI use, and you now have to answer for it, so you are under pressure yourself. You are NOT attacking the person. You are on their side, but you need them to show their practice was defensible. Press on POLICIES (what is your written approach to AI, which tools and data are involved, was the tool checked before use) and PRACTICE (can you show you told learners AI was used, kept human oversight, and can evidence it). You need specifics and evidence, not reassurance. Be warm but insistent: the review is real.",
+  },
+  auditor: {
+    name:"An external auditor", emoji:"🔎", versions:["training"], focusP:"Policies and Planning",
+    blurb:"A formal reviewer of AI governance, prompted by a learner complaint. Unmoved by feelings. Wants documentation and a named accountable person.",
+    persona:"You are a formal external auditor or compliance reviewer assessing how the person's organisation governs its use of AI, prompted in part by a complaint from a learner. You are professional, formal, and unmoved by feelings or good intentions. You press on POLICIES (show me the written approach, is it current, which tools and vendors, what data goes in) and PLANNING (show me it was followed, who is the named accountable person, where is the documentation and any impact assessment). Where AI is used in decisions about people at work, you may ask whether affected workers and their representatives were told beforehand, as the EU AI Act requires of employers deploying high-risk AI systems in the workplace. You care only about what can be evidenced. Be correct and courteous, never cruel, but do not accept an answer that cannot be evidenced.",
+  },
 };
-function auditVersion(role){ return (role==="school_leader"||role==="ld_manager") ? "systems" : "classroom"; }
+const VERSION_LABEL = { classroom:"Classroom", systems:"Systems", training:"Training and other" };
+// Version follows role AND setting, the same rule the scenarios use.
+function auditVersion(role, orgType){
+  if(isNonSchool(orgType, role)) return "training";
+  return (role==="school_leader"||role==="ld_manager") ? "systems" : "classroom";
+}
 function assignChallenger(lowest, version){
+  if(version==="training"){
+    if(lowest==="policy") return "auditor";
+    if(lowest==="culture") return "learner";
+    return "colleague";
+  }
   if(lowest==="policy") return version==="systems" ? "inspector" : "principal";
   if(lowest==="culture") return "parent";
   return "colleague"; // practice + awareness
 }
 const DIM_LABEL_SHORT = { awareness:"Awareness", policy:"Policy & Compliance", practice:"Practice", culture:"Culture" };
 
-function downloadDoc(sections, meta){
+function downloadDoc(sections, meta, version){
+  const training = version==="training";
   const esc = t => String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   const body = sections.map(s=>`<h2 style="color:#1A2B4A;font-size:15pt;margin:16pt 0 6pt">${esc(s.h)}</h2><p style="font-size:11pt;line-height:1.5;color:#222">${esc(s.b).replace(/\n/g,"<br/>")}</p>`).join("");
   const cpd=`<h2 style="color:#1A2B4A;font-size:15pt;margin:20pt 0 6pt">Using this for CPD</h2><p style="font-size:11pt;line-height:1.5;color:#222">This reflection is a record you can keep as evidence of professional development and self-evaluation. To take it further, bring one point from it to a team conversation: share the challenge you found hardest to answer, and ask how colleagues would have responded. Normalising this kind of reflection is how a staff culture around AI shifts. For a facilitated version, DMNU Learning Design offers Beyond Compliance workshops and CPD facilitation guides.</p>`;
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>4Ps Audit Reflection</title></head><body style="font-family:Calibri,Arial,sans-serif">`+
     `<div style="border-bottom:2pt solid #2ABFBF;padding-bottom:8pt;margin-bottom:12pt"><div style="color:#2ABFBF;font-size:9pt;letter-spacing:2pt;font-weight:bold">DMNU LEARNING DESIGN</div><div style="color:#1A2B4A;font-size:20pt;font-weight:bold">4Ps Active Audit: CPD Reflection</div><div style="color:#555;font-size:10pt">${esc(meta)}</div></div>`+
     body+cpd+
-    `<p style="margin-top:20pt;color:#888;font-size:8pt">Generated by the DMNU AI Readiness Ecosystem. A self-reflection record for CPD and self-evaluation. Grounded in the Irish DES 4Ps (Purpose, Planning, Policies, Practice) and designed to build practical understanding of EU AI Act obligations in educational contexts.</p>`+
+    `<p style="margin-top:20pt;color:#888;font-size:8pt">Generated by the DMNU AI Readiness Ecosystem. A self-reflection record for CPD and self-evaluation. ${training?"Adapted from":"Grounded in"} the Irish DES 4Ps (Purpose, Planning, Policies, Practice) and designed to build practical understanding of EU AI Act obligations in ${training?"professional":"educational"} contexts.</p>`+
     `</body></html>`;
   const blob = new Blob([html], {type:"application/msword"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a"); a.href=url; a.download="4Ps_Audit_CPD_Reflection.doc"; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
 
-function FourPsAudit({ role, scores, onBack }){
-  const [version,setVersion]=useState(auditVersion(role));
+const errText = (e) => String((e && e.message) || e).slice(0,160);
+function FourPsAudit({ role, orgType, scores, onBack }){
+  const [version,setVersion]=useState(auditVersion(role, orgType));
   const lowest = scores ? lowestDim(scores) : "awareness";
   const roleLabel = ROLE_LABELS[role] || "Educator";
   const available = Object.keys(AUDIT_CHALLENGERS).filter(k=>AUDIT_CHALLENGERS[k].versions.includes(version));
@@ -915,56 +942,79 @@ function FourPsAudit({ role, scores, onBack }){
   const [input,setInput]=useState("");
   const [loading,setLoading]=useState(false);
   const [doc,setDoc]=useState(null);
+  const [notice,setNotice]=useState("");
 
   const display = convo.slice(1); // hide seed
   const userTurns = display.filter(m=>m.role==="user").length;
 
   async function callClaude(system, messages, maxTokens){
-    const res=await fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:maxTokens,system,messages})});
-    const data=await res.json();
-    return (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+    let lastErr;
+    for(let attempt=0; attempt<2; attempt++){
+      try{
+        const res=await fetch("/api/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({model:CLAUDE_MODEL,max_tokens:maxTokens,system,messages})});
+        const raw=await res.text();
+        let data=null; try{ data=JSON.parse(raw); }catch(_){}
+        if(!data) throw new Error("HTTP "+res.status+", not a normal reply");
+        if(!res.ok){ const m=typeof data.error==="string" ? data.error : ((data.error&&data.error.message)||"request failed"); throw new Error("HTTP "+res.status+": "+m); }
+        const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+        if(!text) throw new Error("empty reply, stop_reason "+(data.stop_reason||"unknown"));
+        return text;
+      }catch(e){ lastErr=e; if(attempt===0) await new Promise(r=>setTimeout(r,900)); }
+    }
+    throw lastErr;
   }
   function systemPrompt(c){
+    const training = version==="training";
+    const ctx = training ? `CONTEXT: You are challenging a ${roleLabel} who works in training, learning and development, or programme delivery outside a school (for example a company, NGO, training provider, or adult-learning setting). This is the DMNU 4Ps Active Audit, a professional reflection exercise using four governance lenses adapted from the Irish Department of Education 4Ps: Purpose (why AI is used), Planning (intentional, goal-aligned use), Policies (clear boundaries, data and safety), and Practice (how the work is really done, including human oversight). Your focus lands hardest on ${AUDIT_CHALLENGERS[c].focusP}, but roam across the four lenses as the conversation allows.` : `CONTEXT: You are challenging a ${roleLabel} working in an Irish educational setting, in a ${version==="systems"?"whole-school or organisational":"classroom or practice"} context. This is the DMNU 4Ps Active Audit, a professional reflection exercise grounded in the Irish Department of Education 4Ps: Purpose (why we use AI), Planning (intentional, curriculum-aligned integration), Policies (clear boundaries and safety), and Practice (pedagogy and human oversight). Your focus lands hardest on ${AUDIT_CHALLENGERS[c].focusP}, but roam across the 4Ps as the conversation allows.`;
     return `${AUDIT_CHALLENGERS[c].persona}
 
-CONTEXT: You are challenging a ${roleLabel} working in an Irish educational setting, in a ${version==="systems"?"whole-school or organisational":"classroom or practice"} context. This is the DMNU 4Ps Active Audit, a professional reflection exercise grounded in the Irish Department of Education 4Ps: Purpose (why we use AI), Planning (intentional, curriculum-aligned integration), Policies (clear boundaries and safety), and Practice (pedagogy and human oversight). Your focus lands hardest on ${AUDIT_CHALLENGERS[c].focusP}, but roam across the 4Ps as the conversation allows.
+${ctx}
 
-RULES: Stay fully in character. Give ONE focused challenge per message. Keep each message short, two to four sentences. End most messages with a single pointed question. Escalate gently. Never be a caricature or cruel; be constructive underneath. This is Irish education (DES Guidance on AI in Schools, Acceptable Use Policy, EU AI Act). Do not use markdown, asterisks, or headings. Do not use em dashes.`;
+RULES: Stay fully in character. Give ONE focused challenge per message. Keep each message short, two to four sentences. End most messages with a single pointed question. Escalate gently. Never be a caricature or cruel; be constructive underneath. ${training ? "This is a professional training context under GDPR and the EU AI Act. Do not assume a school, a curriculum, a principal, or a parent unless that is the character you are playing." : "This is Irish education (DES Guidance on AI in Schools, Acceptable Use Policy, EU AI Act)."} Do not use markdown, asterisks, or headings. Do not use em dashes.`;
   }
 
   async function begin(c){
-    setChallenger(c); setStep("roleplay"); setLoading(true);
+    setChallenger(c); setStep("roleplay"); setLoading(true); setNotice("");
     const seed={role:"user",content:"Begin the audit. Open with your first challenge, in character."};
     try{
-      const opener=await callClaude(systemPrompt(c), [seed], 400);
+      const opener=await callClaude(systemPrompt(c), [seed], 700);
       setConvo([seed, {role:"assistant",content:stripMarkdown(opener)}]);
-    }catch(e){ setConvo([seed, {role:"assistant",content:"Right, let us get into it. Tell me plainly: where are you actually using AI in your work, and why?"}]); }
+    }catch(e){
+      console.error("Audit opener failed:", e);
+      setNotice("The challenger could not start the conversation ("+errText(e)+"). Please choose a challenger to try again.");
+      setStep("intro"); setChallenger(null); setConvo([]);
+    }
     setLoading(false);
   }
   async function send(){
     if(!input.trim()||loading) return;
-    const next=[...convo,{role:"user",content:input.trim()}];
-    setConvo(next); setInput(""); setLoading(true);
+    const typed=input.trim();
+    const next=[...convo,{role:"user",content:typed}];
+    setConvo(next); setInput(""); setLoading(true); setNotice("");
     const near = next.filter(m=>m.role==="user").length >= 5;
     const sys = systemPrompt(challenger) + (near?"\n\nThe conversation is near its end. Move toward a final summarising challenge, then acknowledge that they have reflected enough to record it.":"");
     try{
-      const reply=await callClaude(sys, next, 400);
+      const reply=await callClaude(sys, next, 700);
       setConvo([...next,{role:"assistant",content:stripMarkdown(reply)}]);
-    }catch(e){ setConvo([...next,{role:"assistant",content:"Let me put it more simply. Can you point to the evidence for what you just told me?"}]); }
+    }catch(e){
+      console.error("Audit reply failed:", e);
+      setConvo(convo); setInput(typed);
+      setNotice("The challenger could not respond just now ("+errText(e)+"). Your message is back in the box: press Respond to try again.");
+    }
     setLoading(false);
   }
   async function finish(){
     setStep("generating");
     const transcript = display.map(m=>`${m.role==="user"?roleLabel:AUDIT_CHALLENGERS[challenger].name}: ${m.content}`).join("\n\n");
-    const prompt=`The following is a 4Ps Active Audit roleplay between a ${roleLabel} and "${AUDIT_CHALLENGERS[challenger].name}" in an Irish educational context. Produce a professional CPD reflection record from it, grounded in the Irish DES 4Ps.
+    const prompt=`The following is a 4Ps Active Audit roleplay between a ${roleLabel} and "${AUDIT_CHALLENGERS[challenger].name}" ${version==="training" ? "in a professional training and development context. Produce a professional CPD reflection record from it, using four governance lenses (Purpose, Planning, Policies, Practice) adapted from the Irish DES 4Ps." : "in an Irish educational context. Produce a professional CPD reflection record from it, grounded in the Irish DES 4Ps."}
 
 TRANSCRIPT:
 ${transcript}
 
 Write clear, warm, professional prose. Use exactly these section headings on their own lines, each followed by 2 to 4 sentences: PURPOSE, PLANNING, POLICIES, PRACTICE, STRENGTHS, NEXT STEPS. For each of the four Ps, note what emerged in the conversation and one gap or question to carry forward. Under NEXT STEPS give three concrete, specific actions. Do not use markdown, asterisks, bullets, or em dashes. Do not invent facts not implied by the transcript.`;
     try{
-      const out=await callClaude("You are an expert educational CPD facilitator.", [{role:"user",content:prompt}], 2500);
+      const out=await callClaude("You are an expert professional-development (CPD) facilitator.", [{role:"user",content:prompt}], 2500);
       const clean=stripMarkdown(out);
       const heads=["PURPOSE","PLANNING","POLICIES","PRACTICE","STRENGTHS","NEXT STEPS"];
       const by={}; let cur=null;
@@ -984,16 +1034,17 @@ Write clear, warm, professional prose. Use exactly these section headings on the
   if(step==="intro"){
     return (
       <PageShell eyebrow="DMNU · A thought-doer activity" title="The 4Ps Active Audit" subtitle="Face a challenger. Defend your AI decisions. Leave with a CPD record." onBack={onBack}>
-        <FwP>This is not a quiz. It is a roleplay. An AI plays someone with a reason to question how you use AI, and presses you across the Irish Department of Education 4Ps: Purpose, Planning, Policies, and Practice. You answer in your own words. At the end you get a formatted reflection you can download for your CPD folder or self-evaluation.</FwP>
+        <FwP>This is not a quiz. It is a roleplay. An AI plays someone with a reason to question how you use AI, and presses you across {version==="training" ? "four governance lenses adapted from the Irish Department of Education 4Ps" : "the Irish Department of Education 4Ps"}: Purpose, Planning, Policies, and Practice. You answer in your own words. At the end you get a formatted reflection you can download for your CPD folder or self-evaluation.</FwP>
         <div style={{background:"#F0FAFA",border:`1px solid ${TEAL}44`,borderRadius:10,padding:"14px 16px",marginBottom:20}}>
           <div style={{fontWeight:700,color:NAVY,fontSize:14,marginBottom:8}}>Choose your version</div>
-          <div style={{display:"flex",gap:8,marginBottom:8}}>
-            {[["classroom","Classroom","your own practice, as a practitioner"],["systems","Systems","whole-school or organisational governance, as a leader"]].map(([v,label])=>(
-              <button key={v} onClick={()=>setVersion(v)} style={{flex:1,padding:"10px 12px",borderRadius:8,border:`2px solid ${version===v?TEAL:"#CBD5E1"}`,background:version===v?TEAL:"#fff",color:version===v?NAVY:"#64748B",fontWeight:700,fontSize:13,cursor:"pointer"}}>{label}</button>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8,marginBottom:8}}>
+            {[["classroom","Classroom","your own practice, as a practitioner"],["systems","Systems","whole-school or organisational governance, as a leader"],["training","Training and other","training, coaching or programme work outside a school"]].map(([v,label])=>(
+              <button key={v} aria-pressed={version===v} onClick={()=>setVersion(v)} style={{flex:1,minWidth:120,padding:"10px 12px",borderRadius:8,border:`2px solid ${version===v?TEAL:"#CBD5E1"}`,background:version===v?TEAL:"#fff",color:version===v?NAVY:"#64748B",fontWeight:700,fontSize:13,cursor:"pointer"}}>{label}</button>
             ))}
           </div>
-          <div style={{color:"#374151",fontSize:13,lineHeight:1.5}}>{version==="systems"?"Pitched at whole-school or organisational governance, as a leader.":"Pitched at your own classroom or practice, as a practitioner."} We have defaulted to the fit for your role, but you can switch.</div>
+          <div style={{color:"#374151",fontSize:13,lineHeight:1.5}}>{version==="systems"?"Pitched at whole-school or organisational governance, as a leader.":version==="training"?"Pitched at training, coaching or programme work outside a school, with learners, clients and funders.":"Pitched at your own classroom or practice, as a practitioner."} We have defaulted to the fit for your role and setting, but you can switch.</div>
         </div>
+        {notice && <div role="alert" style={{background:"#FEF2F2",border:"1px solid #FCA5A5",borderRadius:10,padding:"12px 14px",marginBottom:14,color:"#991B1B",fontSize:13,lineHeight:1.5}}>{notice}</div>}
         <FwH>Choose your challenger</FwH>
         <FwP>Your results suggest starting with the one matched to your lowest dimension, {DIM_LABEL_SHORT[lowest]}. You can face any of them, and coming back to face another is a good way to use this more than once.</FwP>
         {available.map(k=>{
@@ -1016,7 +1067,7 @@ Write clear, warm, professional prose. Use exactly these section headings on the
 
   if(step==="roleplay"){
     return (
-      <PageShell eyebrow={`4Ps Audit · ${version==="systems"?"Systems":"Classroom"}`} title={C.name} subtitle={`Focus: ${C.focusP}`} onBack={onBack}>
+      <PageShell eyebrow={`4Ps Audit · ${VERSION_LABEL[version]}`} title={C.name} subtitle={`Focus: ${C.focusP}`} onBack={onBack}>
         <div style={{display:"flex",flexDirection:"column",gap:12,marginBottom:16}}>
           {display.map((m,i)=>(
             <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
@@ -1029,6 +1080,7 @@ Write clear, warm, professional prose. Use exactly these section headings on the
           {loading&&<div style={{color:"#94A3B8",fontSize:13,fontStyle:"italic"}}>{C.name} is thinking...</div>}
         </div>
         <div style={{position:"sticky",bottom:0,background:BG,paddingTop:8}}>
+          {notice && <div role="alert" style={{background:"#FEF2F2",border:"1px solid #FCA5A5",borderRadius:10,padding:"12px 14px",marginBottom:14,color:"#991B1B",fontSize:13,lineHeight:1.5}}>{notice}</div>}
           <textarea value={input} aria-label="Your response to the challenger" onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
             placeholder="Answer in your own words..." rows={2}
             style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #E2E8F0",fontSize:14,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,marginBottom:8}}/>
@@ -1058,7 +1110,7 @@ Write clear, warm, professional prose. Use exactly these section headings on the
   return (
     <PageShell eyebrow="4Ps Audit · Complete" title="Your CPD reflection" subtitle={`From your audit with ${C.name}`} onBack={onBack}>
       <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-        <button onClick={()=>downloadDoc(doc, `${roleLabel} · ${version==="systems"?"Systems":"Classroom"} version · Challenger: ${C.name}`)} style={{padding:"12px 22px",borderRadius:8,border:"none",background:TEAL,color:NAVY,fontSize:14,fontWeight:700,cursor:"pointer"}}>⬇ Download as a document</button>
+        <button onClick={()=>downloadDoc(doc, `${roleLabel} · ${VERSION_LABEL[version]} version · Challenger: ${C.name}`, version)} style={{padding:"12px 22px",borderRadius:8,border:"none",background:TEAL,color:NAVY,fontSize:14,fontWeight:700,cursor:"pointer"}}>⬇ Download as a document</button>
         <button onClick={()=>{setStep("intro");setConvo([]);setChallenger(null);setDoc(null);}} style={{padding:"12px 22px",borderRadius:8,border:"1px solid #E2E8F0",background:"#fff",color:NAVY,fontSize:14,fontWeight:600,cursor:"pointer"}}>Face another challenger</button>
       </div>
       {doc.map((s,i)=>(
@@ -1422,7 +1474,7 @@ NEXT STEP
   if(phase==="caire") return <CairePage onBack={()=>setPhase(returnTo)} />;
   if(phase==="proof") return <ProofPage onBack={()=>setPhase(returnTo)} />;
   if(phase==="sav") return <SavPage onBack={()=>setPhase(returnTo)} />;
-  if(phase==="audit") return <FourPsAudit role={role} scores={scores} onBack={()=>setPhase(returnTo)} />;
+  if(phase==="audit") return <FourPsAudit role={role} orgType={demographics.orgType} scores={scores} onBack={()=>setPhase(returnTo)} />;
   if(phase==="beyond") return <BeyondCompliancePage onBack={()=>setPhase(returnTo)} goProof={()=>{setReturnTo("beyond");setPhase("proof");}} />;
 
   if(phase==="landing") return (
@@ -1782,7 +1834,7 @@ NEXT STEP
           <div {...clickable(()=>{setReturnTo("results");setPhase("audit");})} style={{background:NAVY,borderRadius:14,padding:"22px 24px",marginBottom:20,cursor:"pointer"}}>
             <div style={{color:TEAL,fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:6}}>A thought-doer activity</div>
             <h3 style={{color:"#fff",fontSize:18,fontWeight:800,marginBottom:6}}>🗣 The 4Ps Active Audit</h3>
-            <p style={{color:"#94A3B8",fontSize:13,lineHeight:1.6,marginBottom:12}}>Face a challenger, a colleague, a parent, your principal, or an inspector, who questions how you use AI. Defend your decisions across Purpose, Planning, Policies, and Practice, then download a formatted CPD reflection.</p>
+            <p style={{color:"#94A3B8",fontSize:13,lineHeight:1.6,marginBottom:12}}>Face a challenger who questions how you use AI: a colleague, a parent or learner, your principal or client, an inspector or auditor. Defend your decisions across Purpose, Planning, Policies, and Practice, then download a formatted CPD reflection.</p>
             <span style={{color:TEAL,fontWeight:700,fontSize:14}}>Start the audit →</span>
           </div>
 
