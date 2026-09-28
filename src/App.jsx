@@ -344,11 +344,15 @@ function otherDims(lowest) {
 }
 // Non-school settings get the L&D staff-assessment scenario in the Practice slot.
 const NON_SCHOOL_ORGS = ["ETB","Higher Education","Corporate"];
-function pickScenario(dim, orgType){
-  // Non-school settings (ETB, Higher Education, Corporate) never get the
-  // primary/post-primary scenarios (IEPs, school grading). AscendAI is the
-  // sector-appropriate simulation for institutional and corporate contexts.
-  if(NON_SCHOOL_ORGS.includes(orgType)) return LD_PRACTICE_SCENARIO;
+// A profile is non-school if the organisation type says so, or if it is "Other"
+// and the role is L&D manager or trainer (people rarely working in a school).
+function isNonSchool(orgType, role){
+  return NON_SCHOOL_ORGS.includes(orgType) || (orgType==="Other" && (role==="ld_manager"||role==="trainer"));
+}
+function pickScenario(dim, orgType, role){
+  // Non-school settings never get the primary/post-primary scenarios (IEPs,
+  // school grading). AscendAI is the sector-appropriate simulation for them.
+  if(isNonSchool(orgType, role)) return LD_PRACTICE_SCENARIO;
   return SCENARIOS[dim];
 }
 function stripMarkdown(t){
@@ -1635,9 +1639,9 @@ NEXT STEP
   if(phase==="results"&&scores){
     const tier=getTier(scores.overall);
     const lowest=lowestDim(scores);
-    const recommended=pickScenario(lowest, demographics.orgType);
-    const nonSchool=NON_SCHOOL_ORGS.includes(demographics.orgType);
-    const others=nonSchool ? [] : otherDims(lowest).slice(0,2).map(k=>pickScenario(k, demographics.orgType));
+    const recommended=pickScenario(lowest, demographics.orgType, role);
+    const nonSchool=isNonSchool(demographics.orgType, role);
+    const others=nonSchool ? [] : otherDims(lowest).slice(0,2).map(k=>pickScenario(k, demographics.orgType, role));
     const shownIds=new Set([recommended.id, ...others.map(o=>o.id)]);
     const universals=UNIVERSAL_SCENARIOS.filter(sc=>!shownIds.has(sc.id));
 
