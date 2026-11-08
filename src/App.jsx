@@ -1081,6 +1081,7 @@ Write clear, warm, professional prose. Use exactly these section headings on the
         </div>
         <div style={{position:"sticky",bottom:0,background:BG,paddingTop:8}}>
           {notice && <div role="alert" style={{background:"#FEF2F2",border:"1px solid #FCA5A5",borderRadius:10,padding:"12px 14px",marginBottom:14,color:"#991B1B",fontSize:13,lineHeight:1.5}}>{notice}</div>}
+          <p style={{color:"#94A3B8",fontSize:12,lineHeight:1.5,margin:"0 0 6px"}}>Please do not enter names or any details that could identify a real person, pupil, colleague or school. What you type is sent to an AI service to generate the reply.</p>
           <textarea value={input} aria-label="Your response to the challenger" onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}}
             placeholder="Answer in your own words..." rows={2}
             style={{width:"100%",padding:"12px 14px",borderRadius:10,border:"2px solid #E2E8F0",fontSize:14,fontFamily:"inherit",resize:"vertical",lineHeight:1.5,marginBottom:8}}/>
@@ -1221,6 +1222,7 @@ ${answerSummary}
 They also encountered a Kapow Card (an unexpected twist): "${sc.kapow.text}"
 ${sc.debriefFocus?`\nKey legal point to convey, in plain words, woven into WHERE TO THINK DEEPER: ${sc.debriefFocus}\n`:""}
 ${(kapowReflection.assessment||kapowReflection.toolView)?`\nAfter the twist, they reflected:\n- How it changed their assessment: "${kapowReflection.assessment||"(left blank)"}"\n- Whether it changed their view of the tool: "${kapowReflection.toolView||"(left blank)"}"\n`:""}
+Frame this as building judgement and readiness, not as a test of legal compliance. Never state that the participant's real school or organisation is or is not compliant.
 Write a short, warm, punchy debrief in 3 short sections:
 
 WHAT YOU GOT RIGHT
@@ -1293,6 +1295,7 @@ Keep total to 120 words maximum. Warm but direct tone. No jargon without explana
             <div style={{background:"#FEF2F2",border:"1px solid #FCA5A5",borderRadius:8,padding:"10px 14px",marginBottom:22,fontSize:13,color:"#991B1B"}}>
               <strong>The twist:</strong> {sc.kapow.followUp}
             </div>
+            <p style={{color:"#475569",fontSize:12,lineHeight:1.5,margin:"0 0 14px"}}>Please do not enter names or any details that could identify a real person, pupil, colleague or school. What you type is sent to an AI service to write your debrief.</p>
             <div style={{marginBottom:16}}>
               <label style={{display:"block",fontWeight:700,color:NAVY,fontSize:14,marginBottom:8}}>How does this change your assessment?</label>
               <textarea value={kapowReflection.assessment} aria-label="How does this change your assessment?" onChange={e=>setKapowReflection(r=>({...r,assessment:e.target.value}))} placeholder="Type your thinking here…" rows={3} style={{width:"100%",padding:"12px 14px",borderRadius:8,border:"2px solid #E2E8F0",fontSize:14,color:NAVY,fontFamily:"inherit",resize:"vertical",lineHeight:1.5}}/>
@@ -1436,6 +1439,8 @@ Tailor the language, examples, and terminology to this respondent and setting. A
 SCORES: Awareness ${s.awareness.toFixed(2)} | Policy ${s.policy.toFixed(2)} | Practice ${s.practice.toFixed(2)} | Culture ${s.culture.toFixed(2)} | Overall ${s.overall.toFixed(2)} | Tier: ${tier.label}
 ANSWERS:\n${rawAnswers}
 
+Frame everything as readiness, not compliance. Never state or imply that the respondent, their school or their organisation is or is not compliant with the law, and never certify or grade compliance. Describe how ready they are to understand and act on their obligations, and treat the report as a starting point for judgement.
+
 Generate a personalised AI Readiness Report with EXACTLY these five labelled sections:
 
 READINESS SUMMARY
@@ -1483,7 +1488,7 @@ NEXT STEP
       <div style={{background:NAVY,padding:"48px 24px 56px",textAlign:"center"}}>
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16}}><img src="/dmnu-icon.png" alt="DMNU" style={{height:44,width:"auto"}}/><span style={{fontSize:11,fontWeight:700,letterSpacing:3,color:TEAL,textTransform:"uppercase"}}>DMNU Learning Design</span></div>
         <h1 style={{color:"#fff",fontSize:"clamp(24px,5vw,40px)",fontWeight:800,lineHeight:1.2,maxWidth:680,margin:"0 auto 16px"}}>Is Your School or Organisation<br/><span style={{color:TEAL}}>AI-Ready?</span></h1>
-        <p style={{color:"#94A3B8",fontSize:17,maxWidth:480,margin:"0 auto 16px",lineHeight:1.6}}>Find out in 5 minutes. {QUESTIONS.length} questions. A personalised readiness report, then test your judgement with a live simulation.</p>
+        <p style={{color:"#94A3B8",fontSize:17,maxWidth:480,margin:"0 auto 16px",lineHeight:1.6}}>Find out in 5 minutes. {QUESTIONS.length} questions. A personalised readiness report, then test your judgement with a live simulation. It measures readiness, not compliance.</p>
         <div style={{display:"inline-flex",alignItems:"center",gap:8,background:"rgba(42,191,191,0.12)",border:"1px solid rgba(42,191,191,0.35)",borderRadius:20,padding:"6px 16px",marginBottom:36}}>
           <span style={{color:TEAL,fontSize:13}}>★</span>
           <span style={{color:"#CBD5E1",fontSize:13,fontWeight:600}}>Built on Beyond Compliance, an Official Participant in the 2026 AI for Education Awards</span>
@@ -1495,7 +1500,7 @@ NEXT STEP
         </div>
         <div style={{maxWidth:620,margin:"0 auto",background:"rgba(42,191,191,0.1)",border:"1px solid rgba(42,191,191,0.3)",borderRadius:12,padding:"18px 22px",textAlign:"left"}}>
           <div style={{fontWeight:700,color:TEAL,fontSize:13,marginBottom:10}}>⚖️ Responsible Use Statement</div>
-          <p style={{color:"#94A3B8",fontSize:13,lineHeight:1.6,marginBottom:8}}>This diagnostic is a <strong style={{color:"#CBD5E1"}}>self-reported assessment tool</strong>, not an audit or compliance certification. Scores reflect your perceptions at a point in time, a starting point for reflection, not a definitive judgement.</p>
+          <p style={{color:"#94A3B8",fontSize:13,lineHeight:1.6,marginBottom:8}}>This diagnostic measures <strong style={{color:"#CBD5E1"}}>readiness, not compliance</strong>. It is a self-reported tool, not an audit, an inspection or a certification, and it cannot tell you whether you comply with the law. It is designed to build practical understanding of EU AI Act obligations in educational contexts. Your result is a starting point for judgement, based on your own perceptions at one point in time.</p>
           <p style={{color:"#94A3B8",fontSize:13,lineHeight:1.6}}><strong style={{color:"#CBD5E1"}}>Data handling:</strong> This tool never asks for your name, email, or anything that identifies you. Your responses stay in your browser for this session only and are gone when you close the tab. Nothing is stored, and nothing is used to train AI models. A future version will record anonymous readiness data only, your scores, tier, role, sector, and county or region, never anything that identifies you, to build a nationwide picture of AI readiness for educators and policymakers.</p>
         </div>
       </div>
@@ -1842,7 +1847,7 @@ NEXT STEP
           <div style={{marginBottom:20}}>
             <h3 style={{color:NAVY,fontWeight:700,fontSize:15,marginBottom:12}}>📖 Methodology & Transparency</h3>
             <Disclosure title="How is the report generated?">
-              <p style={{color:"#374151",fontSize:13,lineHeight:1.6,paddingTop:8}}>Your {QUESTIONS.length} responses are averaged into four dimension scores and an overall score, then sent to Claude (Anthropic) to generate a narrative report grounded in the CAIRE-Change Framework, PROOF framework, EU AI Act, Irish DES Guidance (Oct 2025), and DigCompEdu.</p>
+              <p style={{color:"#374151",fontSize:13,lineHeight:1.6,paddingTop:8}}>Your {QUESTIONS.length} responses are averaged into four dimension scores and an overall score, then sent to Claude (Anthropic) to generate a narrative report grounded in the CAIRE-Change Framework, PROOF framework, EU AI Act, Irish DES Guidance (Oct 2025), and DigCompEdu. The report describes readiness. It does not assess or certify compliance.</p>
             </Disclosure>
             <Disclosure title="Data handling: what happens to my responses?">
               <div style={{paddingTop:8}}>
